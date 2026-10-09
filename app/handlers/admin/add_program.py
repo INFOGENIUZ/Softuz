@@ -42,7 +42,7 @@ async def cb_start_add_program(callback: CallbackQuery, state: FSMContext):
         "<i>Bekor qilish uchun pastdagi tugmani bosing.</i>"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel", style="danger")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
@@ -97,7 +97,7 @@ async def process_file(message: Message, state: FSMContext, bot: Bot):
         f"(Masalan: <code>Adobe Photoshop 2024</code> yoki <code>Telegram Desktop</code>)"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel", style="danger")]]
     )
     await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
@@ -114,7 +114,7 @@ async def process_title(message: Message, state: FSMContext):
         f"(Masalan: <code>v25.2.0 RePack</code> yoki <code>v4.16.8</code>)"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel", style="danger")]]
     )
     await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
@@ -179,7 +179,7 @@ async def process_skip_password(callback: CallbackQuery, state: FSMContext):
         "(Dasturning asosiy imkoniyatlari, tizim talablari va o'rnatish bo'yicha maslahatlar)"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel", style="danger")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
@@ -199,7 +199,7 @@ async def process_password(message: Message, state: FSMContext):
         f"(Dasturning asosiy imkoniyatlari, tizim talablari va o'rnatish bo'yicha maslahatlar)"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cancel", style="danger")]]
     )
     await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 

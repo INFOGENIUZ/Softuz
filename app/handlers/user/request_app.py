@@ -27,7 +27,7 @@ async def msg_request_app(message: Message, state: FSMContext):
         "<i>Bekor qilish uchun pastdagi tugmani bosing:</i>"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_request")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_request", style="danger")]]
     )
     await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
@@ -39,7 +39,7 @@ async def cb_start_request(callback: CallbackQuery, state: FSMContext):
         "Sizga kerak bo'lgan dastur nomini va tizimini yozib yuboring (masalan: <i>CorelDRAW 2024 Windows</i>):"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_request")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_request", style="danger")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")

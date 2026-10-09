@@ -28,8 +28,8 @@ async def msg_favorites(message: Message, session: AsyncSession):
     if total_count == 0:
         empty_kb = InlineKeyboardMarkup(
             inline_keyboard=[
-                [InlineKeyboardButton(text="📂 Kategoriyalarni ko'rish", callback_data="open_categories")],
-                [InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")]
+                [InlineKeyboardButton(text="📂 Kategoriyalarni ko'rish", callback_data="open_categories", style="primary")],
+                [InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main", style="danger")]
             ]
         )
         await message.answer(
@@ -44,16 +44,16 @@ async def msg_favorites(message: Message, session: AsyncSession):
     keyboard = []
     for p in programs:
         keyboard.append([
-            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"view_prog_{p.id}")
+            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"view_prog_{p.id}", style="primary")
         ])
 
     nav_row = []
     if paginator.has_next:
-        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data="favpage_2"))
+        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data="favpage_2", style="primary"))
     if nav_row:
         keyboard.append(nav_row)
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main", style="danger")])
 
     text = f"⭐ <b>SIZNING SAQLANGAN DASTURLARINGIZ</b>\n\n<i>Jami saqlangan: {total_count} ta dastur</i>"
     await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
@@ -74,18 +74,18 @@ async def cb_favorites_page(callback: CallbackQuery, session: AsyncSession):
     keyboard = []
     for p in programs:
         keyboard.append([
-            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"view_prog_{p.id}")
+            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"view_prog_{p.id}", style="primary")
         ])
 
     nav_row = []
     if paginator.has_prev:
-        nav_row.append(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"favpage_{paginator.prev_page}"))
+        nav_row.append(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"favpage_{paginator.prev_page}", style="primary"))
     nav_row.append(InlineKeyboardButton(text=f"📄 {paginator.page}/{paginator.total_pages}", callback_data="noop"))
     if paginator.has_next:
-        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"favpage_{paginator.next_page}"))
+        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"favpage_{paginator.next_page}", style="primary"))
     keyboard.append(nav_row)
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main", style="danger")])
 
     text = f"⭐ <b>Siz saqlab qo'ygan dasturlar</b> (Jami: {total_count} ta):"
     try:

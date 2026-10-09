@@ -29,16 +29,16 @@ async def cb_admin_channels(callback: CallbackQuery, session: AsyncSession):
     )
 
     keyboard = [
-        [InlineKeyboardButton(text="➕ Yangi kanal qo'shish", callback_data="add_new_channel")]
+        [InlineKeyboardButton(text="➕ Yangi kanal qo'shish", callback_data="add_new_channel", style="success")]
     ]
 
     for ch in channels:
         keyboard.append([
             InlineKeyboardButton(text=f"📢 {ch.channel_title}", url=ch.channel_url),
-            InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"delchan_{ch.channel_id}")
+            InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"delchan_{ch.channel_id}", style="danger")
         ])
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")])
 
     try:
         await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
@@ -55,7 +55,7 @@ async def cb_add_channel_prompt(callback: CallbackQuery, state: FSMContext):
         "<i>(Kanal ID sini @userinfobot yoki boshqa info botlar orqali olishingiz mumkin):</i>"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_channels")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_channels", style="danger")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")

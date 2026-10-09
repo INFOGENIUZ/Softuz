@@ -44,7 +44,7 @@ async def cb_admin_stats(callback: CallbackQuery, session: AsyncSession):
     )
 
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")]]
+        inline_keyboard=[[InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")]]
     )
 
     try:
@@ -102,11 +102,11 @@ async def cb_admin_requests(callback: CallbackQuery, session: AsyncSession):
         uname = f"@{req.username}" if req.username else f"ID: {req.telegram_id}"
         text += f"• <b>#{req.id}:</b> {escape_text(req.app_name)} ({uname})\n"
         keyboard.append([
-            InlineKeyboardButton(text=f"✅ #{req.id} Bajarildi", callback_data=f"req_done_{req.id}"),
-            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"req_reject_{req.id}")
+            InlineKeyboardButton(text=f"✅ #{req.id} Bajarildi", callback_data=f"req_done_{req.id}", style="success"),
+            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"req_reject_{req.id}", style="danger")
         ])
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")])
 
     try:
         await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")

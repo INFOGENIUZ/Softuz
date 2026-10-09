@@ -34,18 +34,18 @@ async def cb_admin_program_list(callback: CallbackQuery, session: AsyncSession):
     keyboard = []
     for p in programs:
         keyboard.append([
-            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"admin_view_prog_{p.id}")
+            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"admin_view_prog_{p.id}", style="primary")
         ])
 
     nav_row = []
     if paginator.has_prev:
-        nav_row.append(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"admin_prog_list_{paginator.prev_page}"))
+        nav_row.append(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"admin_prog_list_{paginator.prev_page}", style="primary"))
     nav_row.append(InlineKeyboardButton(text=f"📄 {paginator.page}/{paginator.total_pages}", callback_data="noop"))
     if paginator.has_next:
-        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"admin_prog_list_{paginator.next_page}"))
+        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"admin_prog_list_{paginator.next_page}", style="primary"))
     keyboard.append(nav_row)
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")])
 
     text = f"📋 <b>Barcha dasturlar ro'yxati</b> (Jami: {total_count} ta):\n<i>Tahrirlash yoki o'chirish uchun dasturni tanlang:</i>"
     try:

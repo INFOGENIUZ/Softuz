@@ -26,7 +26,7 @@ async def msg_start_search(message: Message, state: FSMContext):
         "<i>Qidiruvni to'xtatish uchun pastdagi tugmani bosing:</i>"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Qidiruvni bekor qilish", callback_data="cancel_search")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Qidiruvni bekor qilish", callback_data="cancel_search", style="danger")]]
     )
     await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
@@ -35,7 +35,7 @@ async def cb_prompt_search(callback: CallbackQuery, state: FSMContext):
     await state.set_state(SearchState.waiting_query)
     text = "🔍 <b>Qidirayotgan dastur nomini yozing:</b>"
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_search")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_search", style="danger")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
@@ -83,13 +83,14 @@ async def process_search_query(message: Message, state: FSMContext, session: Asy
         keyboard.append([
             InlineKeyboardButton(
                 text=f"{idx}. {prog.title} ({prog.version}) - {format_os(prog.os_type)}",
-                callback_data=f"view_prog_{prog.id}"
+                callback_data=f"view_prog_{prog.id}",
+                style="primary"
             )
         ])
 
     keyboard.append([
-        InlineKeyboardButton(text="🔍 Qayta qidirish", callback_data="prompt_search"),
-        InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")
+        InlineKeyboardButton(text="🔍 Qayta qidirish", callback_data="prompt_search", style="success"),
+        InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main", style="danger")
     ])
 
     await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")

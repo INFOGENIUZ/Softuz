@@ -4,24 +4,24 @@ def get_main_reply_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
     """Foydalanuvchi va admin uchun asosiy doimiy menyu tugmalari."""
     keyboard = [
         [
-            KeyboardButton(text="🔍 Dastur qidirish")
+            KeyboardButton(text="🔍 Dastur qidirish", style="success")
         ],
         [
-            KeyboardButton(text="📂 Kategoriyalar"),
-            KeyboardButton(text="🔥 TOP Dasturlar")
+            KeyboardButton(text="📂 Kategoriyalar", style="primary"),
+            KeyboardButton(text="🔥 TOP Dasturlar", style="primary")
         ],
         [
-            KeyboardButton(text="🆕 Yangi relizlar"),
-            KeyboardButton(text="⭐ Saqlanganlar")
+            KeyboardButton(text="🆕 Yangi relizlar", style="primary"),
+            KeyboardButton(text="⭐ Saqlanganlar", style="primary")
         ],
         [
-            KeyboardButton(text="💡 Dastur so'rash"),
-            KeyboardButton(text="ℹ️ Bot haqida / Yordam")
+            KeyboardButton(text="💡 Dastur so'rash", style="primary"),
+            KeyboardButton(text="ℹ️ Bot haqida / Yordam", style="primary")
         ]
     ]
 
     if is_admin:
-        keyboard.append([KeyboardButton(text="🛠 Admin panel")])
+        keyboard.append([KeyboardButton(text="🛠 Admin panel", style="primary")])
 
     return ReplyKeyboardMarkup(
         keyboard=keyboard,
@@ -33,7 +33,7 @@ def get_main_reply_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
 def get_cancel_reply_keyboard() -> ReplyKeyboardMarkup:
     """Jarayonni bekor qilish tugmasi."""
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="❌ Bekor qilish")]],
+        keyboard=[[KeyboardButton(text="❌ Bekor qilish", style="danger")]],
         resize_keyboard=True,
         one_time_keyboard=True
     )

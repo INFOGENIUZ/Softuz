@@ -28,7 +28,7 @@ async def cb_start_broadcast(callback: CallbackQuery, state: FSMContext):
         "<i>Bekor qilish uchun pastdagi tugmani bosing:</i>"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_menu")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_menu", style="danger")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
@@ -47,8 +47,8 @@ async def process_broadcast_message(message: Message, state: FSMContext):
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="✅ Ha, yuborilsin!", callback_data="confirm_broadcast"),
-                InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_menu")
+                InlineKeyboardButton(text="✅ Ha, yuborilsin!", callback_data="confirm_broadcast", style="success"),
+                InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_menu", style="danger")
             ]
         ]
     )

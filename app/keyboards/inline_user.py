@@ -77,13 +77,12 @@ def get_programs_list_keyboard(
         keyboard.append(nav_row)
 
     # Qidirish va Orqaga
-    # Qidirish va Orqaga
     keyboard.append([
-        InlineKeyboardButton(text="🔍 Qidirish", callback_data="prompt_search"),
-        InlineKeyboardButton(text="🔙 Bo'limlarga qaytish", callback_data="open_categories")
+        InlineKeyboardButton(text="🔍 Qidirish", callback_data="prompt_search", style="success"),
+        InlineKeyboardButton(text="🔙 Bo'limlarga qaytish", callback_data="open_categories", style="danger")
     ])
     keyboard.append([
-        InlineKeyboardButton(text="🏠 Asosiy Menyu", callback_data="back_to_main")
+        InlineKeyboardButton(text="🏠 Asosiy Menyu", callback_data="back_to_main", style="danger")
     ])
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -104,22 +103,23 @@ def get_program_card_keyboard(
         [
             InlineKeyboardButton(
                 text=f"⬇️ Yuklab olish ({file_size_formatted})",
-                callback_data=f"dl_{program_id}"
+                callback_data=f"dl_{program_id}",
+                style="success"
             )
         ],
         [
-            InlineKeyboardButton(text=fav_icon, callback_data=f"fav_{program_id}"),
-            InlineKeyboardButton(text="⭐️ Baholash (1-5)", callback_data=f"rate_{program_id}")
+            InlineKeyboardButton(text=fav_icon, callback_data=f"fav_{program_id}", style="primary"),
+            InlineKeyboardButton(text="⭐️ Baholash (1-5)", callback_data=f"rate_{program_id}", style="primary")
         ],
         [
             InlineKeyboardButton(text="📢 Do'stlarga ulashish", url=share_url)
         ],
         [
-            InlineKeyboardButton(text="⚠️ Ishlamayaptimi?", callback_data=f"report_{program_id}"),
-            InlineKeyboardButton(text="🔙 Orqaga", callback_data=back_target)
+            InlineKeyboardButton(text="⚠️ Ishlamayaptimi?", callback_data=f"report_{program_id}", style="danger"),
+            InlineKeyboardButton(text="🔙 Orqaga", callback_data=back_target, style="danger")
         ],
         [
-            InlineKeyboardButton(text="🏠 Asosiy Menyu", callback_data="back_to_main")
+            InlineKeyboardButton(text="🏠 Asosiy Menyu", callback_data="back_to_main", style="danger")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -128,14 +128,14 @@ def get_rating_keyboard(program_id: int) -> InlineKeyboardMarkup:
     """Dasturni 1 dan 5 gacha baholash inline tugmalari."""
     keyboard = [
         [
-            InlineKeyboardButton(text="1 ⭐", callback_data=f"setrate_{program_id}_1"),
-            InlineKeyboardButton(text="2 ⭐", callback_data=f"setrate_{program_id}_2"),
-            InlineKeyboardButton(text="3 ⭐", callback_data=f"setrate_{program_id}_3"),
-            InlineKeyboardButton(text="4 ⭐", callback_data=f"setrate_{program_id}_4"),
-            InlineKeyboardButton(text="5 ⭐", callback_data=f"setrate_{program_id}_5"),
+            InlineKeyboardButton(text="1 ⭐", callback_data=f"setrate_{program_id}_1", style="primary"),
+            InlineKeyboardButton(text="2 ⭐", callback_data=f"setrate_{program_id}_2", style="primary"),
+            InlineKeyboardButton(text="3 ⭐", callback_data=f"setrate_{program_id}_3", style="primary"),
+            InlineKeyboardButton(text="4 ⭐", callback_data=f"setrate_{program_id}_4", style="primary"),
+            InlineKeyboardButton(text="5 ⭐", callback_data=f"setrate_{program_id}_5", style="primary"),
         ],
         [
-            InlineKeyboardButton(text="🔙 Bekor qilish", callback_data=f"view_prog_{program_id}")
+            InlineKeyboardButton(text="🔙 Bekor qilish", callback_data=f"view_prog_{program_id}", style="danger")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -153,7 +153,8 @@ def get_subscription_keyboard(channels: List[MandatoryChannel]) -> InlineKeyboar
     keyboard.append([
         InlineKeyboardButton(
             text="🔄 A'zolikni tekshirish",
-            callback_data="check_subscription"
+            callback_data="check_subscription",
+            style="success"
         )
     ])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -163,13 +164,13 @@ def get_search_empty_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="💡 Ushbu dasturni buyurtma qilish", callback_data="start_request_app")
+                InlineKeyboardButton(text="💡 Ushbu dasturni buyurtma qilish", callback_data="start_request_app", style="success")
             ],
             [
-                InlineKeyboardButton(text="📂 Kategoriyalarni ko'rish", callback_data="open_categories")
+                InlineKeyboardButton(text="📂 Kategoriyalarni ko'rish", callback_data="open_categories", style="primary")
             ],
             [
-                InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")
+                InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main", style="danger")
             ]
         ]
     )
@@ -187,7 +188,8 @@ def get_about_keyboard() -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text="🔙 Asosiy Menyu",
-                    callback_data="back_to_main"
+                    callback_data="back_to_main",
+                    style="danger"
                 )
             ]
         ]

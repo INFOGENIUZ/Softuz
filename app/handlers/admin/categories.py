@@ -22,16 +22,16 @@ async def cb_admin_categories(callback: CallbackQuery, session: AsyncSession):
     categories = await get_all_categories(session, active_only=False)
     text = "🗂 <b>Kategoriyalarni boshqarish:</b>\n\n"
     keyboard = [
-        [InlineKeyboardButton(text="➕ Yangi kategoriya qo'shish", callback_data="add_category")]
+        [InlineKeyboardButton(text="➕ Yangi kategoriya qo'shish", callback_data="add_category", style="success")]
     ]
 
     for cat in categories:
         keyboard.append([
-            InlineKeyboardButton(text=f"{cat.icon} {cat.name}", callback_data="noop"),
-            InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"delcat_{cat.id}")
+            InlineKeyboardButton(text=f"{cat.icon} {cat.name}", callback_data="noop", style="primary"),
+            InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"delcat_{cat.id}", style="danger")
         ])
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")])
 
     try:
         await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
@@ -47,7 +47,7 @@ async def cb_add_category_prompt(callback: CallbackQuery, state: FSMContext):
         "(Masalan: <code>📱 Android O'yinlar</code> yoki <code>🛡 VPN Utilitlar</code>):"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cats")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cats", style="danger")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")

@@ -170,11 +170,11 @@ async def msg_top_programs(message: Message, session: AsyncSession):
         text += f"<b>{idx}. {escape_text(p.title)}</b> <code>({escape_text(p.version)})</code>\n"
         text += f"   └ 📥 {p.downloads_count} marta yuklangan | {format_os(p.os_type)}\n\n"
         keyboard.append([
-            InlineKeyboardButton(text=f"📦 {idx}. {p.title}", callback_data=f"view_prog_{p.id}")
+            InlineKeyboardButton(text=f"📦 {idx}. {p.title}", callback_data=f"view_prog_{p.id}", style="primary")
         ])
 
     keyboard.append([
-        InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")
+        InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main", style="danger")
     ])
 
     await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
@@ -196,11 +196,11 @@ async def msg_latest_programs(message: Message, session: AsyncSession):
         text += f"<b>{idx}. {escape_text(p.title)}</b> <code>({escape_text(p.version)})</code>\n"
         text += f"   └ {format_os(p.os_type)} | 📦 {format_size(p.file_size)}\n\n"
         keyboard.append([
-            InlineKeyboardButton(text=f"📦 {idx}. {p.title}", callback_data=f"view_prog_{p.id}")
+            InlineKeyboardButton(text=f"📦 {idx}. {p.title}", callback_data=f"view_prog_{p.id}", style="primary")
         ])
 
     keyboard.append([
-        InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")
+        InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main", style="danger")
     ])
 
     await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
