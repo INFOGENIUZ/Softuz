@@ -10,8 +10,8 @@ from app.database.repositories import (
     increment_views, is_favorite, get_program_rating_stats,
     get_active_channels
 )
-from app.keyboards.reply import get_main_reply_keyboard
-from app.keyboards.inline_user import get_program_card_keyboard
+from app.keyboards.reply import get_main_reply_keyboard, hide_reply_keyboard
+from app.keyboards.inline_user import get_program_card_keyboard, get_about_keyboard
 from app.utils.formatters import format_size, format_os, escape_text
 
 router = Router(name="common_router")
@@ -129,23 +129,35 @@ async def cb_check_subscription(callback: CallbackQuery, session: AsyncSession, 
         )
 
 @router.message(F.text == "ℹ️ Bot haqida / Yordam")
+@router.message(F.text.in_(["/help", "/about"]))
 async def msg_help(message: Message):
+    await hide_reply_keyboard(message)
     help_text = (
-        "ℹ️ <b>DASTURLAR BOTI — QO'LLANMA VA YORDAM</b>\n\n"
-        "<b>1. Dasturni qanday yuklab olaman?</b>\n"
-        "• «🔍 Dastur qidirish» tugmasi orqali nomini yozing yoki «📂 Kategoriyalar» bo'limidan tanlang.\n"
-        "• Dastur kartochkasidagi «⬇️ Yuklab olish» tugmasini bosing.\n\n"
-        "<b>2. Arxiv paroli nima?</b>\n"
-        "• Ba'zi dasturlar virusga qarshi tizimlar tomonidan noto'g'ri bloklanmasligi uchun parol bilan arxivlanadi.\n"
-        "• Parol har bir dastur kartochkasida aniq ko'rsatiladi.\n\n"
-        "<b>3. Dasturlarni arxivdan qanday chiqarish kerak?</b>\n"
-        "• Kompyuterda: <i>WinRAR</i> yoki <i>7-Zip</i> dasturi orqali.\n"
-        "• Telefondada: <i>ZArchiver</i> yoki <i>RAR</i> ilovasi orqali.\n\n"
-        "<b>4. Kerakli dastur topilmadimi?</b>\n"
-        "• «💡 Dastur so'rash» tugmasini bosib, dastur nomini yozib qoldiring. Adminlar uni tez orada yuklashadi!\n\n"
-        "👨‍💻 <b>Bog'lanish va qo'llab-quvvatlash:</b> @admin"
+        "ℹ️ <b>DASTURLAR PLATFORMASI — RASMIY QO'LLANMA VA YORDAM</b>\n\n"
+        "<blockquote>⚡️ <i>Kompyuter va mobil qurilmalar uchun eng sara, xavfsiz hamda so'nggi versiyadagi dasturlar markazi.</i></blockquote>\n\n"
+        "🔹 <b>1. Dasturni qanday topish va yuklab olish mumkin?</b>\n"
+        "• <b>Qidiruv:</b> «<code>🔍 Dastur qidirish</code>» orqali nomini yozing (masalan: <i>Photoshop</i>, <i>WinRAR</i>, <i>CapCut</i>).\n"
+        "• <b>Katalog:</b> «<code>📂 Kategoriyalar</code>» bo'limida dasturlar yo'nalishlar bo'yicha to'liq tartiblangan.\n"
+        "• <b>Yuklab olish:</b> Dastur kartochkasidagi «<code>⬇️ Yuklab olish</code>» tugmasini bosing — fayl to'g'ridan-to'g'ri Telegram orqali yuqori tezlikda yuboriladi.\n\n"
+        "🔹 <b>2. Arxiv paroli va xavfsizlik kafolati:</b>\n"
+        "• Har bir fayl bazaga yuklanishdan oldin <b>VirusTotal</b> tekshiruvidan o'tkaziladi.\n"
+        "• Agar arxivda parol bo'lsa, u dastur ma'lumotlaridagi <code>Arxiv paroli</code> qatorida aniq ko'rsatiladi.\n\n"
+        "🔹 <b>3. Arxivdan chiqarish dasturlari:</b>\n"
+        "• <b>Kompyuter (Windows/macOS):</b> <i>WinRAR</i> yoki <i>7-Zip</i> dasturlari orqali.\n"
+        "• <b>Mobil telefon (Android/iOS):</b> <i>ZArchiver</i> yoki <i>RAR</i> ilovasi orqali.\n\n"
+        "🔹 <b>4. Kerakli dastur topilmadimi?</b>\n"
+        "• «<code>💡 Dastur so'rash</code>» bo'limiga kirib buyurtma qoldiring — adminlar uni tez orada botga yuklashadi!\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "👨‍💻 <b>Dasturchi va texnik qo'llab-quvvatlash:</b>\n"
+        "Savol, taklif yoki texnik murojaatlar bo'yicha rasmiy aloqa:\n"
+        "👉 <a href=\"https://t.me/developer_muxa\">@developer_muxa</a>"
     )
-    await message.answer(help_text, parse_mode="HTML")
+    await message.answer(
+        help_text,
+        reply_markup=get_about_keyboard(),
+        parse_mode="HTML",
+        disable_web_page_preview=True
+    )
 
 @router.callback_query(F.data == "back_to_main")
 async def cb_back_to_main(callback: CallbackQuery):
@@ -155,11 +167,13 @@ async def cb_back_to_main(callback: CallbackQuery):
     except Exception:
         pass
     await callback.message.answer(
-        "👇 Asosiy menyu:",
-        reply_markup=get_main_reply_keyboard(is_admin=is_admin)
+        "👇 <b>Asosiy menyu:</b>\n<i>Kerakli bo'limni tanlang yoki qidiruv nomini yozing:</i>",
+        reply_markup=get_main_reply_keyboard(is_admin=is_admin),
+        parse_mode="HTML"
     )
     await callback.answer()
 
 @router.callback_query(F.data == "noop")
 async def cb_noop(callback: CallbackQuery):
     await callback.answer()
+

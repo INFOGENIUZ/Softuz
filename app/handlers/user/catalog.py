@@ -10,6 +10,7 @@ from app.database.repositories import (
 from app.keyboards.inline_user import (
     get_categories_keyboard, get_programs_list_keyboard, get_program_card_keyboard
 )
+from app.keyboards.reply import hide_reply_keyboard
 from app.utils.paginator import Paginator
 from app.utils.formatters import format_size, format_os, escape_text
 
@@ -21,7 +22,11 @@ async def msg_categories(message: Message, session: AsyncSession):
     if not categories:
         await message.answer("📂 Hozircha kategoriyalar mavjud emas.")
         return
-    text = "📂 <b>Kerakli bo'lim yoki dastur yo'nalishini tanlang:</b>"
+    await hide_reply_keyboard(message)
+    text = (
+        "📂 <b>KATEGORIYALAR KATALOGI</b>\n\n"
+        "<i>Kerakli bo'lim yoki dastur yo'nalishini tanlang:</i>"
+    )
     await message.answer(text, reply_markup=get_categories_keyboard(categories), parse_mode="HTML")
 
 @router.callback_query(F.data == "open_categories")
@@ -155,10 +160,14 @@ async def msg_top_programs(message: Message, session: AsyncSession):
         await message.answer("🔥 Hozircha TOP dasturlar mavjud emas.")
         return
 
-    text = "🔥 <b>ENG KO'P YUKLAB OLINGAN TOP DASTURLAR:</b>\n\n"
+    await hide_reply_keyboard(message)
+    text = (
+        "🔥 <b>ENG KO'P YUKLAB OLINGAN TOP DASTURLAR</b>\n\n"
+        "<blockquote>Foydalanuvchilar tomonidan eng ko'p yuklab olingan sara dasturlar ro'yxati:</blockquote>\n\n"
+    )
     keyboard = []
     for idx, p in enumerate(progs, 1):
-        text += f"<b>{idx}. {escape_text(p.title)}</b> ({escape_text(p.version)})\n"
+        text += f"<b>{idx}. {escape_text(p.title)}</b> <code>({escape_text(p.version)})</code>\n"
         text += f"   └ 📥 {p.downloads_count} marta yuklangan | {format_os(p.os_type)}\n\n"
         keyboard.append([
             InlineKeyboardButton(text=f"📦 {idx}. {p.title}", callback_data=f"view_prog_{p.id}")
@@ -177,10 +186,14 @@ async def msg_latest_programs(message: Message, session: AsyncSession):
         await message.answer("🆕 Hozircha yangi qo'shilgan dasturlar yo'q.")
         return
 
-    text = "🆕 <b>BOTGA ENG SO'NGGI QO'SHILGAN DASTURLAR:</b>\n\n"
+    await hide_reply_keyboard(message)
+    text = (
+        "🆕 <b>ENG SO'NGGI QO'SHILGAN YANGI RELIZLAR</b>\n\n"
+        "<blockquote>Bot katalogiga eng oxirgi kiritilgan yangi versiyalar:</blockquote>\n\n"
+    )
     keyboard = []
     for idx, p in enumerate(progs, 1):
-        text += f"<b>{idx}. {escape_text(p.title)}</b> ({escape_text(p.version)})\n"
+        text += f"<b>{idx}. {escape_text(p.title)}</b> <code>({escape_text(p.version)})</code>\n"
         text += f"   └ {format_os(p.os_type)} | 📦 {format_size(p.file_size)}\n\n"
         keyboard.append([
             InlineKeyboardButton(text=f"📦 {idx}. {p.title}", callback_data=f"view_prog_{p.id}")

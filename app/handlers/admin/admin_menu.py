@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from app.core.config import settings
 from app.keyboards.inline_admin import get_admin_main_menu
-from app.keyboards.reply import get_main_reply_keyboard
+from app.keyboards.reply import get_main_reply_keyboard, hide_reply_keyboard
 
 router = Router(name="admin_menu_router")
 
@@ -20,9 +20,11 @@ async def cmd_admin(message: Message, state: FSMContext):
         )
         return
 
+    await hide_reply_keyboard(message)
     text = (
-        "🛠 <b>Boshqaruv paneliga xush kelibsiz!</b>\n\n"
-        "Quyidagi bo'limlardan birini tanlang:"
+        "🛠 <b>ADMINISTRATOR BOSHQARUV PANELI</b>\n\n"
+        "<blockquote>Bot statistikasi, yangi dastur kiritish, kanallar va sozlamalar:</blockquote>\n\n"
+        "Kerakli bo'limni tanlang:"
     )
     await message.answer(text, reply_markup=get_admin_main_menu(), parse_mode="HTML")
 
@@ -46,4 +48,10 @@ async def cb_admin_close(callback: CallbackQuery):
         await callback.message.delete()
     except Exception:
         pass
+    is_admin = callback.from_user.id in settings.admin_ids
+    await callback.message.answer(
+        "👇 <b>Asosiy menyu:</b>",
+        reply_markup=get_main_reply_keyboard(is_admin=is_admin),
+        parse_mode="HTML"
+    )
     await callback.answer("Admin panel yopildi.")

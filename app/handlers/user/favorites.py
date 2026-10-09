@@ -7,6 +7,7 @@ from app.database.repositories import (
     get_user_favorites, get_program_by_id
 )
 from app.keyboards.inline_user import get_program_card_keyboard
+from app.keyboards.reply import hide_reply_keyboard
 from app.utils.paginator import Paginator
 from app.utils.formatters import format_size, format_os, escape_text
 
@@ -22,10 +23,19 @@ async def msg_favorites(message: Message, session: AsyncSession):
     per_page = 5
     programs, total_count = await get_user_favorites(session, user.id, limit=per_page, offset=0)
 
+    await hide_reply_keyboard(message)
+
     if total_count == 0:
+        empty_kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="📂 Kategoriyalarni ko'rish", callback_data="open_categories")],
+                [InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")]
+            ]
+        )
         await message.answer(
-            "⭐ <b>Sizda hali saqlangan dasturlar yo'q.</b>\n\n"
-            "Istalgan dastur sahifasidagi <b>«⭐ Saqlash»</b> tugmasini bosib, uni o'zingizning xatcho'pingizga qo'shib qo'yishingiz mumkin.",
+            "⭐ <b>SAQLANGAN DASTURLAR RO'YXATI BO'SH</b>\n\n"
+            "<i>Istalgan dastur kartochkasidagi «⭐ Saqlash» tugmasini bosib, uni o'zingizning xatcho'pingizga kiritib qo'yishingiz mumkin.</i>",
+            reply_markup=empty_kb,
             parse_mode="HTML"
         )
         return
@@ -45,7 +55,7 @@ async def msg_favorites(message: Message, session: AsyncSession):
 
     keyboard.append([InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")])
 
-    text = f"⭐ <b>Siz saqlab qo'ygan dasturlar</b> (Jami: {total_count} ta):"
+    text = f"⭐ <b>SIZNING SAQLANGAN DASTURLARINGIZ</b>\n\n<i>Jami saqlangan: {total_count} ta dastur</i>"
     await message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("favpage_"))

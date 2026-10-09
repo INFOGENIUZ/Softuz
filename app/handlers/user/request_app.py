@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.database.repositories import get_user_by_telegram_id, create_app_request
 from app.keyboards.inline_admin import get_request_actions_keyboard
-from app.keyboards.reply import get_main_reply_keyboard
+from app.keyboards.reply import get_main_reply_keyboard, hide_reply_keyboard
 from app.utils.formatters import escape_text
 
 router = Router(name="request_app_router")
@@ -18,11 +18,13 @@ class RequestAppState(StatesGroup):
 @router.message(F.text == "💡 Dastur so'rash")
 async def msg_request_app(message: Message, state: FSMContext):
     await state.set_state(RequestAppState.waiting_app_name)
+    await hide_reply_keyboard(message)
     text = (
-        "💡 <b>Dastur buyurtma qilish:</b>\n\n"
-        "Sizga kerak bo'lgan dastur nomini, versiyasini va qaysi operatsion tizim (Windows, Android, macOS) "
-        "uchun ekanligini yozib qoldiring (masalan: <i>AutoCAD 2024 Windows</i>):\n\n"
-        "<i>Bekor qilish uchun pastdagi tugmani bosing.</i>"
+        "💡 <b>DASTUR BUYURTMA QILISH (SO'ROV)</b>\n\n"
+        "Sizga kerak bo'lgan dastur nomi, versiyasi va operatsion tizimini yozib yuboring:\n"
+        "<i>Misol:</i> <code>AutoCAD 2024 Windows 64-bit</code>\n\n"
+        "<blockquote>Biz uni imkon qadar tez topib, botga yuklaymiz!</blockquote>\n\n"
+        "<i>Bekor qilish uchun pastdagi tugmani bosing:</i>"
     )
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_request")]]
@@ -33,8 +35,8 @@ async def msg_request_app(message: Message, state: FSMContext):
 async def cb_start_request(callback: CallbackQuery, state: FSMContext):
     await state.set_state(RequestAppState.waiting_app_name)
     text = (
-        "💡 <b>Dastur buyurtma qilish:</b>\n\n"
-        "Sizga kerak bo'lgan dastur nomini va tizimini yozib yuboring (masalan: <i>CorelDRAW 2023 Windows</i>):"
+        "💡 <b>DASTUR BUYURTMA QILISH:</b>\n\n"
+        "Sizga kerak bo'lgan dastur nomini va tizimini yozib yuboring (masalan: <i>CorelDRAW 2024 Windows</i>):"
     )
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_request")]]
@@ -54,8 +56,9 @@ async def cb_cancel_request(callback: CallbackQuery, state: FSMContext):
         pass
     is_admin = callback.from_user.id in settings.admin_ids
     await callback.message.answer(
-        "Dastur so'rash bekor qilindi.",
-        reply_markup=get_main_reply_keyboard(is_admin=is_admin)
+        "💡 <b>Dastur so'rash bekor qilindi.</b>\n👇 Asosiy menyudasiz:",
+        reply_markup=get_main_reply_keyboard(is_admin=is_admin),
+        parse_mode="HTML"
     )
     await callback.answer()
 

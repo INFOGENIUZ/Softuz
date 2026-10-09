@@ -4,8 +4,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.database.repositories import search_programs
 from app.keyboards.inline_user import get_search_empty_keyboard
+from app.keyboards.reply import get_main_reply_keyboard, hide_reply_keyboard
 from app.utils.formatters import escape_text, format_os
 
 router = Router(name="search_router")
@@ -16,9 +18,12 @@ class SearchState(StatesGroup):
 @router.message(F.text == "🔍 Dastur qidirish")
 async def msg_start_search(message: Message, state: FSMContext):
     await state.set_state(SearchState.waiting_query)
+    await hide_reply_keyboard(message)
     text = (
-        "🔍 <b>Dastur qidirish rejimidasiz.</b>\n\n"
-        "O'zingizga kerakli dastur nomini yozib yuboring (masalan: <code>Photoshop</code>, <code>Telegram</code>, <code>WinRAR</code> yoki <code>CapCut</code>):"
+        "🔍 <b>DASTURLARNI QIDIRISH TIZIMI</b>\n\n"
+        "O'zingizga kerakli dastur nomini yozib yuboring:\n"
+        "<i>Misol:</i> <code>Photoshop</code>, <code>Telegram</code>, <code>WinRAR</code>, <code>CapCut</code>...\n\n"
+        "<i>Qidiruvni to'xtatish uchun pastdagi tugmani bosing:</i>"
     )
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text="❌ Qidiruvni bekor qilish", callback_data="cancel_search")]]
@@ -28,7 +33,7 @@ async def msg_start_search(message: Message, state: FSMContext):
 @router.callback_query(F.data == "prompt_search")
 async def cb_prompt_search(callback: CallbackQuery, state: FSMContext):
     await state.set_state(SearchState.waiting_query)
-    text = "🔍 Qidirayotgan dastur nomini yozing:"
+    text = "🔍 <b>Qidirayotgan dastur nomini yozing:</b>"
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_search")]]
     )
@@ -45,7 +50,12 @@ async def cb_cancel_search(callback: CallbackQuery, state: FSMContext):
         await callback.message.delete()
     except Exception:
         pass
-    await callback.message.answer("🔍 Qidiruv bekor qilindi.")
+    is_admin = callback.from_user.id in settings.admin_ids
+    await callback.message.answer(
+        "🔍 <b>Qidiruv bekor qilindi.</b>\n👇 Asosiy menyudasiz:",
+        reply_markup=get_main_reply_keyboard(is_admin=is_admin),
+        parse_mode="HTML"
+    )
     await callback.answer()
 
 @router.message(SearchState.waiting_query)
