@@ -15,45 +15,44 @@ class AddCategoryState(StatesGroup):
 
 @router.callback_query(F.data == "admin_cats")
 async def cb_admin_categories(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     if callback.from_user.id not in settings.admin_ids:
-        await callback.answer("Ruxsat berilmagan!", show_alert=True)
         return
 
     categories = await get_all_categories(session, active_only=False)
     text = "🗂 <b>Kategoriyalarni boshqarish:</b>\n\n"
     keyboard = [
-        [InlineKeyboardButton(text="➕ Yangi kategoriya qo'shish", callback_data="add_category", style="success")]
+        [InlineKeyboardButton(text="➕ Yangi kategoriya qo'shish", callback_data="add_category")]
     ]
 
     for cat in categories:
         keyboard.append([
-            InlineKeyboardButton(text=f"{cat.icon} {cat.name}", callback_data="noop", style="primary"),
-            InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"delcat_{cat.id}", style="danger")
+            InlineKeyboardButton(text=f"{cat.icon} {cat.name}", callback_data="noop"),
+            InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"delcat_{cat.id}")
         ])
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")])
 
     try:
         await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data == "add_category")
 async def cb_add_category_prompt(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.set_state(AddCategoryState.waiting_name)
     text = (
         "➕ <b>Yangi kategoriya nomini kiriting:</b>\n"
         "(Masalan: <code>📱 Android O'yinlar</code> yoki <code>🛡 VPN Utilitlar</code>):"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cats", style="danger")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_cats")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.message(AddCategoryState.waiting_name, F.text)
 async def process_cat_name(message: Message, state: FSMContext, session: AsyncSession):

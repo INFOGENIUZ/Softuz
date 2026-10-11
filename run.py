@@ -66,6 +66,11 @@ async def init_database():
     """Baza jadvallarini yaratish va boshlang'ich ma'lumotlarni kiritish."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE programs ADD COLUMN IF NOT EXISTS download_url VARCHAR(512);"))
+        except Exception:
+            pass
     logger.info("✅ Ma'lumotlar bazasi jadvallari muvaffaqiyatli tekshirildi/yaratildi.")
 
     # Boshlang'ich default kategoriyalarni kiritish
@@ -166,10 +171,19 @@ async def main():
     bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
 
+    # Bot ma'lumotlarini keshga yuklash
+    try:
+        me = await bot.get_me()
+        from app.utils.cache import cache
+        cache.set_bot_username(me.username)
+        logger.info(f"🤖 Bot ma'lumotlari muvaffaqiyatli yuklandi: @{me.username} (ID: {me.id})")
+    except Exception as e:
+        logger.warning(f"Bot ma'lumotlarini olishda ogohlantirish: {e}")
+
     # Middlewarelarni ro'yxatdan o'tkazish
     dp.update.outer_middleware(DatabaseSessionMiddleware())
     dp.message.middleware(ThrottlingMiddleware(limit=0.5))
-    dp.callback_query.middleware(ThrottlingMiddleware(limit=0.5))
+    dp.callback_query.middleware(ThrottlingMiddleware(limit=0.25))
     dp.message.middleware(SubscriptionMiddleware())
     dp.callback_query.middleware(SubscriptionMiddleware())
 

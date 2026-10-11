@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from app.database.models import Category, Program, MandatoryChannel
 from app.utils.paginator import Paginator
@@ -93,7 +93,8 @@ def get_program_card_keyboard(
     is_fav: bool,
     bot_username: str,
     prog_code: str,
-    back_target: str = "open_categories"
+    back_target: str = "open_categories",
+    download_url: Optional[str] = None
 ) -> InlineKeyboardMarkup:
     """Dastur kartochkasi ostidagi to'liq boshqaruv tugmalari."""
     fav_icon = "❤️ Saqlangan" if is_fav else "⭐ Saqlash"
@@ -102,26 +103,37 @@ def get_program_card_keyboard(
     keyboard = [
         [
             InlineKeyboardButton(
-                text=f"⬇️ Yuklab olish ({file_size_formatted})",
-                callback_data=f"dl_{program_id}",
-                style="success"
+                text=f"⬇️ Telegramdan yuklash ({file_size_formatted})",
+                callback_data=f"dl_{program_id}"
             )
-        ],
+        ]
+    ]
+
+    # Agar tezkor bulutli havola mavjud bo'lsa
+    if download_url:
+        keyboard.append([
+            InlineKeyboardButton(
+                text="🌐 Tezkor Bulutdan yuklash (Direct Link)",
+                url=download_url
+            )
+        ])
+
+    keyboard.extend([
         [
-            InlineKeyboardButton(text=fav_icon, callback_data=f"fav_{program_id}", style="primary"),
-            InlineKeyboardButton(text="⭐️ Baholash (1-5)", callback_data=f"rate_{program_id}", style="primary")
+            InlineKeyboardButton(text=fav_icon, callback_data=f"fav_{program_id}"),
+            InlineKeyboardButton(text="⭐️ Baholash (1-5)", callback_data=f"rate_{program_id}")
         ],
         [
             InlineKeyboardButton(text="📢 Do'stlarga ulashish", url=share_url)
         ],
         [
-            InlineKeyboardButton(text="⚠️ Ishlamayaptimi?", callback_data=f"report_{program_id}", style="danger"),
-            InlineKeyboardButton(text="🔙 Orqaga", callback_data=back_target, style="danger")
+            InlineKeyboardButton(text="⚠️ Ishlamayaptimi?", callback_data=f"report_{program_id}"),
+            InlineKeyboardButton(text="🔙 Orqaga", callback_data=back_target)
         ],
         [
-            InlineKeyboardButton(text="🏠 Asosiy Menyu", callback_data="back_to_main", style="danger")
+            InlineKeyboardButton(text="🏠 Asosiy Menyu", callback_data="back_to_main")
         ]
-    ]
+    ])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 def get_rating_keyboard(program_id: int) -> InlineKeyboardMarkup:

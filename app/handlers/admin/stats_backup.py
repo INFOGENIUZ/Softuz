@@ -14,8 +14,8 @@ router = Router(name="stats_backup_router")
 
 @router.callback_query(F.data == "admin_stats")
 async def cb_admin_stats(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     if callback.from_user.id not in settings.admin_ids:
-        await callback.answer("Ruxsat berilmagan!", show_alert=True)
         return
 
     stats = await get_full_statistics(session)
@@ -44,14 +44,13 @@ async def cb_admin_stats(callback: CallbackQuery, session: AsyncSession):
     )
 
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")]]
+        inline_keyboard=[[InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")]]
     )
 
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data == "admin_backup")
 async def cb_admin_backup(callback: CallbackQuery):
@@ -86,13 +85,13 @@ async def cb_admin_backup(callback: CallbackQuery):
 
 @router.callback_query(F.data == "admin_requests")
 async def cb_admin_requests(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     if callback.from_user.id not in settings.admin_ids:
-        await callback.answer("Ruxsat berilmagan!", show_alert=True)
         return
 
     requests = await get_pending_requests(session, limit=10)
     if not requests:
-        await callback.answer("Hozircha yangi dastur buyurtmalari yo'q.", show_alert=True)
+        await callback.message.answer("Hozircha yangi dastur buyurtmalari yo'q.")
         return
 
     text = "📩 <b>Kutilayotgan so'nggi dastur buyurtmalari:</b>\n\n"
@@ -102,17 +101,16 @@ async def cb_admin_requests(callback: CallbackQuery, session: AsyncSession):
         uname = f"@{req.username}" if req.username else f"ID: {req.telegram_id}"
         text += f"• <b>#{req.id}:</b> {escape_text(req.app_name)} ({uname})\n"
         keyboard.append([
-            InlineKeyboardButton(text=f"✅ #{req.id} Bajarildi", callback_data=f"req_done_{req.id}", style="success"),
-            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"req_reject_{req.id}", style="danger")
+            InlineKeyboardButton(text=f"✅ #{req.id} Bajarildi", callback_data=f"req_done_{req.id}"),
+            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"req_reject_{req.id}")
         ])
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")])
 
     try:
         await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data.startswith("req_done_"))
 async def cb_request_done(callback: CallbackQuery, session: AsyncSession, bot: Bot):

@@ -50,6 +50,7 @@ class Program(Base):
     file_name: Mapped[str] = mapped_column(String(255))
     file_size: Mapped[int] = mapped_column(BigInteger, default=0)  # bytes
     image_file_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    download_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     views_count: Mapped[int] = mapped_column(Integer, default=0)
     downloads_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())

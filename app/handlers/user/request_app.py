@@ -33,22 +33,23 @@ async def msg_request_app(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "start_request_app")
 async def cb_start_request(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.set_state(RequestAppState.waiting_app_name)
     text = (
         "💡 <b>DASTUR BUYURTMA QILISH:</b>\n\n"
         "Sizga kerak bo'lgan dastur nomini va tizimini yozib yuboring (masalan: <i>CorelDRAW 2024 Windows</i>):"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_request", style="danger")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_request")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data == "cancel_request")
 async def cb_cancel_request(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.clear()
     try:
         await callback.message.delete()
@@ -60,7 +61,6 @@ async def cb_cancel_request(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_main_reply_keyboard(is_admin=is_admin),
         parse_mode="HTML"
     )
-    await callback.answer()
 
 @router.message(RequestAppState.waiting_app_name)
 async def process_request_name(message: Message, state: FSMContext, session: AsyncSession, bot: Bot):

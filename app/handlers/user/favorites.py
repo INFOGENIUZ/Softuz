@@ -60,10 +60,10 @@ async def msg_favorites(message: Message, session: AsyncSession):
 
 @router.callback_query(F.data.startswith("favpage_"))
 async def cb_favorites_page(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     page = int(callback.data.split("_")[1])
     user = await get_user_by_telegram_id(session, callback.from_user.id)
     if not user:
-        await callback.answer()
         return
 
     per_page = 5
@@ -74,25 +74,24 @@ async def cb_favorites_page(callback: CallbackQuery, session: AsyncSession):
     keyboard = []
     for p in programs:
         keyboard.append([
-            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"view_prog_{p.id}", style="primary")
+            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"view_prog_{p.id}")
         ])
 
     nav_row = []
     if paginator.has_prev:
-        nav_row.append(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"favpage_{paginator.prev_page}", style="primary"))
+        nav_row.append(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"favpage_{paginator.prev_page}"))
     nav_row.append(InlineKeyboardButton(text=f"📄 {paginator.page}/{paginator.total_pages}", callback_data="noop"))
     if paginator.has_next:
-        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"favpage_{paginator.next_page}", style="primary"))
+        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"favpage_{paginator.next_page}"))
     keyboard.append(nav_row)
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main", style="danger")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Asosiy Menyu", callback_data="back_to_main")])
 
     text = f"⭐ <b>Siz saqlab qo'ygan dasturlar</b> (Jami: {total_count} ta):"
     try:
         await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data.startswith("fav_"))
 async def cb_toggle_favorite(callback: CallbackQuery, session: AsyncSession, bot: Bot):
@@ -108,23 +107,32 @@ async def cb_toggle_favorite(callback: CallbackQuery, session: AsyncSession, bot
         return
 
     added = await toggle_favorite(session, user.id, prog.id)
-    bot_info = await bot.get_me()
+    if added:
+        await callback.answer("❤️ Sevimlilarga qo'shildi!", show_alert=False)
+    else:
+        await callback.answer("🗑 Sevimlilardan olib tashlandi!", show_alert=False)
+
+    from app.utils.cache import cache
+    bot_username = cache.get_bot_username()
+    if not bot_username:
+        try:
+            bot_info = await bot.get_me()
+            bot_username = bot_info.username
+            cache.set_bot_username(bot_username)
+        except Exception:
+            bot_username = "dasturlar_bot"
 
     new_keyboard = get_program_card_keyboard(
         program_id=prog.id,
         file_size_formatted=format_size(prog.file_size),
         is_fav=added,
-        bot_username=bot_info.username,
+        bot_username=bot_username,
         prog_code=prog.code,
-        back_target=f"cat_{prog.category_id}_1"
+        back_target=f"cat_{prog.category_id}_1",
+        download_url=prog.download_url
     )
 
     try:
         await callback.message.edit_reply_markup(reply_markup=new_keyboard)
     except Exception:
         pass
-
-    if added:
-        await callback.answer("❤️ Sevimlilarga qo'shildi!", show_alert=False)
-    else:
-        await callback.answer("🗑 Sevimlilardan olib tashlandi!", show_alert=False)

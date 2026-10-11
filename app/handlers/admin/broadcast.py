@@ -17,8 +17,8 @@ class BroadcastState(StatesGroup):
 
 @router.callback_query(F.data == "admin_broadcast")
 async def cb_start_broadcast(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     if callback.from_user.id not in settings.admin_ids:
-        await callback.answer("Ruxsat berilmagan!", show_alert=True)
         return
 
     await state.set_state(BroadcastState.waiting_message)
@@ -28,13 +28,12 @@ async def cb_start_broadcast(callback: CallbackQuery, state: FSMContext):
         "<i>Bekor qilish uchun pastdagi tugmani bosing:</i>"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_menu", style="danger")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_menu")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.message(BroadcastState.waiting_message)
 async def process_broadcast_message(message: Message, state: FSMContext):

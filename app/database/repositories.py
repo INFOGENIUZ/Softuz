@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import (
     User, Category, Program, Favorite, Rating, AppRequest, MandatoryChannel
 )
+from app.utils.cache import cache
 
 # ----------------- USERS -----------------
 async def get_or_create_user(
@@ -95,12 +96,18 @@ async def seed_default_categories(session: AsyncSession):
         await session.commit()
 
 async def get_all_categories(session: AsyncSession, active_only: bool = True) -> List[Category]:
+    cached = cache.get_cached_categories(active_only)
+    if cached is not None:
+        return cached
+
     stmt = select(Category)
     if active_only:
         stmt = stmt.where(Category.is_active == True)
     stmt = stmt.order_by(Category.order_index.asc(), Category.id.asc())
     result = await session.execute(stmt)
-    return list(result.scalars().all())
+    categories = list(result.scalars().all())
+    cache.set_cached_categories(categories, active_only)
+    return categories
 
 async def get_category_by_id(session: AsyncSession, category_id: int) -> Optional[Category]:
     result = await session.execute(select(Category).where(Category.id == category_id))
@@ -111,6 +118,7 @@ async def create_category(session: AsyncSession, name: str, icon: str = "📁", 
     session.add(cat)
     await session.commit()
     await session.refresh(cat)
+    cache.invalidate_categories()
     return cat
 
 async def delete_category(session: AsyncSession, category_id: int) -> bool:
@@ -118,6 +126,7 @@ async def delete_category(session: AsyncSession, category_id: int) -> bool:
     if cat:
         await session.delete(cat)
         await session.commit()
+        cache.invalidate_categories()
         return True
     return False
 
@@ -135,7 +144,8 @@ async def create_program(
     archive_password: Optional[str] = None,
     file_unique_id: Optional[str] = None,
     storage_msg_id: Optional[int] = None,
-    image_file_id: Optional[str] = None
+    image_file_id: Optional[str] = None,
+    download_url: Optional[str] = None
 ) -> Program:
     # Generate unique code like prog_1, prog_2
     temp_code = f"temp_{datetime.utcnow().timestamp()}"
@@ -152,7 +162,8 @@ async def create_program(
         storage_msg_id=storage_msg_id,
         file_name=file_name,
         file_size=file_size,
-        image_file_id=image_file_id
+        image_file_id=image_file_id,
+        download_url=download_url
     )
     session.add(prog)
     await session.flush()
@@ -384,6 +395,7 @@ async def add_mandatory_channel(
         session.add(chan)
     await session.commit()
     await session.refresh(chan)
+    cache.invalidate_channels()
     return chan
 
 async def delete_mandatory_channel(session: AsyncSession, channel_id: int) -> bool:
@@ -393,6 +405,7 @@ async def delete_mandatory_channel(session: AsyncSession, channel_id: int) -> bo
     if chan:
         await session.delete(chan)
         await session.commit()
+        cache.invalidate_channels()
         return True
     return False
 

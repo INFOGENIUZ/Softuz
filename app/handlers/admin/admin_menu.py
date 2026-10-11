@@ -30,9 +30,9 @@ async def cmd_admin(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "admin_menu")
 async def cb_admin_menu(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.clear()
     if callback.from_user.id not in settings.admin_ids:
-        await callback.answer("Ruxsat berilmagan!", show_alert=True)
         return
 
     text = "🛠 <b>Admin Boshqaruv Paneli:</b>"
@@ -40,10 +40,10 @@ async def cb_admin_menu(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text(text, reply_markup=get_admin_main_menu(), parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=get_admin_main_menu(), parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data == "admin_close")
 async def cb_admin_close(callback: CallbackQuery):
+    await callback.answer("Admin panel yopildi.")
     try:
         await callback.message.delete()
     except Exception:
@@ -54,4 +54,3 @@ async def cb_admin_close(callback: CallbackQuery):
         reply_markup=get_main_reply_keyboard(is_admin=is_admin),
         parse_mode="HTML"
     )
-    await callback.answer("Admin panel yopildi.")

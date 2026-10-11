@@ -32,19 +32,20 @@ async def msg_start_search(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "prompt_search")
 async def cb_prompt_search(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.set_state(SearchState.waiting_query)
     text = "🔍 <b>Qidirayotgan dastur nomini yozing:</b>"
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_search", style="danger")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="cancel_search")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data == "cancel_search")
 async def cb_cancel_search(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.clear()
     try:
         await callback.message.delete()
@@ -56,7 +57,6 @@ async def cb_cancel_search(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_main_reply_keyboard(is_admin=is_admin),
         parse_mode="HTML"
     )
-    await callback.answer()
 
 @router.message(SearchState.waiting_query)
 async def process_search_query(message: Message, state: FSMContext, session: AsyncSession):

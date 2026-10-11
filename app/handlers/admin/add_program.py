@@ -24,6 +24,7 @@ class AddProgramState(StatesGroup):
     waiting_category = State()
     waiting_password = State()
     waiting_description = State()
+    waiting_download_url = State()
     waiting_image = State()
     waiting_confirm = State()
 
@@ -209,20 +210,49 @@ async def process_description(message: Message, state: FSMContext):
     desc = message.text.strip()
     await state.update_data(description=desc)
 
+    await state.set_state(AddProgramState.waiting_download_url)
+    text = (
+        "🌐 <b>8-bosqich: Tezkor bulutli yuklab olish havolasi bormi?</b>\n\n"
+        "(Masalan: Google Drive, Mega, Yandex Disk havolasi. Katta dasturlar uchun foydalanuvchilar juda tez yuklab olishiga yordam beradi)\n\n"
+        "<i>Agar bulutli havola bo'lmasa, «⏭ O'tkazib yuborish» tugmasini bosing:</i>"
+    )
+    keyboard = get_skip_or_cancel_keyboard(skip_cb="skip_download_url")
+    await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+
+# 8-QADAM: BULUTLI HAVOLA (Yoki o'tkazib yuborish)
+@router.callback_query(AddProgramState.waiting_download_url, F.data == "skip_download_url")
+async def process_skip_download_url(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await state.update_data(download_url=None)
+    await prompt_image(callback.message, state)
+
+@router.message(AddProgramState.waiting_download_url, F.text)
+async def process_download_url(message: Message, state: FSMContext):
+    url = message.text.strip()
+    if not (url.startswith("http://") or url.startswith("https://")):
+        await message.answer("⚠️ Iltimos, to'g'ri havola kiriting (http:// yoki https:// bilan boshlansin):")
+        return
+    await state.update_data(download_url=url)
+    await prompt_image(message, state)
+
+async def prompt_image(target_message: Message, state: FSMContext):
     await state.set_state(AddProgramState.waiting_image)
     text = (
-        "🖼 <b>8-bosqich: Dastur logosi yoki skrinshoti rasmini yuboring:</b>\n\n"
+        "🖼 <b>9-bosqich: Dastur logosi yoki skrinshoti rasmini yuboring:</b>\n\n"
         "<i>Agar rasm qo'ymoqchi bo'lmasangiz, «⏭ O'tkazib yuborish» tugmasini bosing:</i>"
     )
     keyboard = get_skip_or_cancel_keyboard(skip_cb="skip_image")
-    await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+    try:
+        await target_message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+    except Exception:
+        await target_message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
-# 8-QADAM: RASM (Yoki o'tkazib yuborish)
+# 9-QADAM: RASM (Yoki o'tkazib yuborish)
 @router.callback_query(AddProgramState.waiting_image, F.data == "skip_image")
 async def process_skip_image(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.update_data(image_file_id=None)
     await show_confirmation(callback.message, state)
-    await callback.answer()
 
 @router.message(AddProgramState.waiting_image, F.photo)
 async def process_image(message: Message, state: FSMContext):
@@ -235,6 +265,7 @@ async def show_confirmation(target_message: Message, state: FSMContext):
     await state.set_state(AddProgramState.waiting_confirm)
 
     pwd_str = f"<code>{escape_text(data.get('archive_password'))}</code>" if data.get('archive_password') else "Parolsiz"
+    cloud_str = f"<code>{escape_text(data.get('download_url'))}</code>" if data.get('download_url') else "Mavjud emas"
     preview = (
         "🔍 <b>YANGI DASTUR MA'LUMOTLARINI TEKSHIRING:</b>\n\n"
         f"🏷 <b>Nomi:</b> {escape_text(data.get('title'))}\n"
@@ -242,6 +273,7 @@ async def show_confirmation(target_message: Message, state: FSMContext):
         f"💻 <b>Tizim:</b> {format_os(data.get('os_type'))}\n"
         f"📂 <b>Kategoriya:</b> {escape_text(data.get('category_name'))}\n"
         f"📦 <b>Fayl:</b> {escape_text(data.get('file_name'))} ({format_size(data.get('file_size'))})\n"
+        f"🌐 <b>Bulutli havola:</b> {cloud_str}\n"
         f"🔑 <b>Parol:</b> {pwd_str}\n\n"
         f"📝 <b>Tavsif:</b>\n{escape_text(data.get('description'))}\n\n"
         "<i>Ma'lumotlar to'g'ri bo'lsa, «✅ Tasdiqlash va chop etish» tugmasini bosing:</i>"
@@ -264,9 +296,10 @@ async def show_confirmation(target_message: Message, state: FSMContext):
 
     await target_message.answer(preview, reply_markup=keyboard, parse_mode="HTML")
 
-# 9-QADAM: TASDIQLASH VA CHOP ETISH
+# 10-QADAM: TASDIQLASH VA CHOP ETISH
 @router.callback_query(AddProgramState.waiting_confirm, F.data == "confirm_upload")
 async def process_confirm_upload(callback: CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
+    await callback.answer("⏳ Dastur saqlanmoqda...", show_alert=False)
     data = await state.get_data()
     await state.clear()
 
@@ -283,11 +316,21 @@ async def process_confirm_upload(callback: CallbackQuery, state: FSMContext, ses
         archive_password=data.get("archive_password"),
         file_unique_id=data.get("file_unique_id"),
         storage_msg_id=data.get("storage_msg_id"),
-        image_file_id=data.get("image_file_id")
+        image_file_id=data.get("image_file_id"),
+        download_url=data.get("download_url")
     )
 
-    bot_info = await bot.get_me()
-    deep_link = f"https://t.me/{bot_info.username}?start={prog.code}"
+    from app.utils.cache import cache
+    bot_username = cache.get_bot_username()
+    if not bot_username:
+        try:
+            bot_info = await bot.get_me()
+            bot_username = bot_info.username
+            cache.set_bot_username(bot_username)
+        except Exception:
+            bot_username = "dasturlar_bot"
+
+    deep_link = f"https://t.me/{bot_username}?start={prog.code}"
 
     success_text = (
         f"🎉 <b>Dastur muvaffaqiyatli saqlandi va chop etildi!</b>\n\n"
@@ -301,4 +344,3 @@ async def process_confirm_upload(callback: CallbackQuery, state: FSMContext, ses
     except Exception:
         pass
     await callback.message.answer(success_text, parse_mode="HTML")
-    await callback.answer("Dastur saqlandi!", show_alert=True)

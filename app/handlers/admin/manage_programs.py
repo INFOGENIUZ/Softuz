@@ -14,8 +14,8 @@ router = Router(name="manage_programs_router")
 
 @router.callback_query(F.data.startswith("admin_prog_list_"))
 async def cb_admin_program_list(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     if callback.from_user.id not in settings.admin_ids:
-        await callback.answer("Ruxsat berilmagan!", show_alert=True)
         return
 
     page = int(callback.data.split("_")[3])
@@ -24,7 +24,7 @@ async def cb_admin_program_list(callback: CallbackQuery, session: AsyncSession):
 
     total_count = (await session.execute(select(func.count(Program.id)))).scalar() or 0
     if total_count == 0:
-        await callback.answer("Hozircha bazada dasturlar yo'q.", show_alert=True)
+        await callback.message.answer("Hozircha bazada dasturlar yo'q.")
         return
 
     stmt = select(Program).order_by(Program.id.desc()).limit(per_page).offset(offset)
@@ -34,38 +34,38 @@ async def cb_admin_program_list(callback: CallbackQuery, session: AsyncSession):
     keyboard = []
     for p in programs:
         keyboard.append([
-            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"admin_view_prog_{p.id}", style="primary")
+            InlineKeyboardButton(text=f"📦 {p.title} ({p.version})", callback_data=f"admin_view_prog_{p.id}")
         ])
 
     nav_row = []
     if paginator.has_prev:
-        nav_row.append(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"admin_prog_list_{paginator.prev_page}", style="primary"))
+        nav_row.append(InlineKeyboardButton(text="◀️ Oldingi", callback_data=f"admin_prog_list_{paginator.prev_page}"))
     nav_row.append(InlineKeyboardButton(text=f"📄 {paginator.page}/{paginator.total_pages}", callback_data="noop"))
     if paginator.has_next:
-        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"admin_prog_list_{paginator.next_page}", style="primary"))
+        nav_row.append(InlineKeyboardButton(text="Keyingi ▶️", callback_data=f"admin_prog_list_{paginator.next_page}"))
     keyboard.append(nav_row)
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")])
 
     text = f"📋 <b>Barcha dasturlar ro'yxati</b> (Jami: {total_count} ta):\n<i>Tahrirlash yoki o'chirish uchun dasturni tanlang:</i>"
     try:
         await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data.startswith("admin_view_prog_"))
 async def cb_admin_view_prog(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     if callback.from_user.id not in settings.admin_ids:
-        await callback.answer("Ruxsat berilmagan!", show_alert=True)
         return
 
     prog_id = int(callback.data.split("_")[3])
     prog = await get_program_by_id(session, prog_id)
     if not prog:
-        await callback.answer("Dastur topilmadi!", show_alert=True)
+        await callback.message.answer("Dastur topilmadi!")
         return
 
+    cloud_link_text = f"\n🌐 <b>Bulutli havola:</b> <code>{escape_text(prog.download_url)}</code>" if prog.download_url else ""
     text = (
         f"📦 <b>Dastur boshqaruvi:</b>\n\n"
         f"🏷 <b>Nomi:</b> {escape_text(prog.title)}\n"
@@ -76,13 +76,13 @@ async def cb_admin_view_prog(callback: CallbackQuery, session: AsyncSession):
         f"📥 <b>Yuklab olingan:</b> {prog.downloads_count} marta\n"
         f"👁 <b>Ko'rilgan:</b> {prog.views_count} marta\n"
         f"🆔 <b>Kod:</b> <code>{prog.code}</code>"
+        f"{cloud_link_text}"
     )
     keyboard = get_manage_program_keyboard(prog.id)
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data.startswith("admin_del_prog_"))
 async def cb_admin_del_prog(callback: CallbackQuery, session: AsyncSession):

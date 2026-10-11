@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.database.repositories import get_active_channels
 from app.keyboards.inline_user import get_subscription_keyboard
+from app.utils.cache import cache
 
 class SubscriptionMiddleware(BaseMiddleware):
-    """Homiy kanallarga a'zolikni tekshiruvchi oraliq qatlam."""
+    """Homiy kanallarga a'zolikni tekshiruvchi tezkor keshli oraliq qatlam."""
     async def __call__(
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
@@ -24,7 +25,6 @@ class SubscriptionMiddleware(BaseMiddleware):
 
         if isinstance(event, Message) and event.from_user:
             user_id = event.from_user.id
-            # Don't check for /start commands with deep linking or /admin
             text = event.text or ""
             if text.startswith("/admin"):
                 return await handler(event, data)
@@ -37,12 +37,21 @@ class SubscriptionMiddleware(BaseMiddleware):
         if not user_id or user_id in settings.admin_ids or callback_data == "check_subscription":
             return await handler(event, data)
 
+        # Agar foydalanuvchi obunasi keshda bo'lsa, hech qanday API so'rovisiz darhol o'tkazamiz
+        if cache.is_user_subscribed(user_id):
+            return await handler(event, data)
+
         if not session or not bot:
             return await handler(event, data)
 
-        # Bazadagi faol majburiy kanallarni olamiz
-        channels = await get_active_channels(session)
+        # Kanallarni keshdan tekshiramiz
+        channels = cache.get_cached_channels()
+        if channels is None:
+            channels = await get_active_channels(session)
+            cache.set_cached_channels(channels)
+
         if not channels:
+            cache.mark_user_subscribed(user_id)
             return await handler(event, data)
 
         unsubscribed = []
@@ -56,6 +65,7 @@ class SubscriptionMiddleware(BaseMiddleware):
                 continue
 
         if unsubscribed:
+            cache.invalidate_user_subscription(user_id)
             text = (
                 "⚠️ <b>Botdan foydalanish uchun quyidagi rasmiy kanallarga a'zo bo'lishingiz shart:</b>\n\n"
                 "Iltimos, pastdagi havolalar orqali kanallarga kiring va <b>«🔄 A'zolikni tekshirish»</b> tugmasini bosing:"
@@ -63,10 +73,15 @@ class SubscriptionMiddleware(BaseMiddleware):
             keyboard = get_subscription_keyboard(unsubscribed)
 
             if is_callback:
-                await event.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+                try:
+                    await event.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+                except Exception:
+                    pass
                 await event.answer()
             else:
                 await event.answer(text, reply_markup=keyboard, parse_mode="HTML")
             return None
 
+        # Foydalanuvchi a'zo, keshga saqlaymiz (10 minut davomida qayta tekshirilmaydi)
+        cache.mark_user_subscribed(user_id)
         return await handler(event, data)

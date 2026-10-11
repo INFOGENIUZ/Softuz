@@ -1,3 +1,4 @@
+import asyncio
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,26 +32,27 @@ async def msg_categories(message: Message, session: AsyncSession):
 
 @router.callback_query(F.data == "open_categories")
 async def cb_open_categories(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     categories = await get_all_categories(session, active_only=True)
     if not categories:
-        await callback.answer("Hozircha bo'limlar yo'q.", show_alert=True)
+        await callback.message.answer("Hozircha bo'limlar yo'q.")
         return
     text = "📂 <b>Kerakli bo'lim yoki dastur yo'nalishini tanlang:</b>"
     try:
         await callback.message.edit_text(text, reply_markup=get_categories_keyboard(categories), parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=get_categories_keyboard(categories), parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data.startswith("cat_"))
 async def cb_category_programs(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     parts = callback.data.split("_")
     cat_id = int(parts[1])
     page = int(parts[2]) if len(parts) > 2 else 1
 
     category = await get_category_by_id(session, cat_id)
     if not category:
-        await callback.answer("Kategoriya topilmadi!", show_alert=True)
+        await callback.message.answer("Kategoriya topilmadi!")
         return
 
     per_page = 5
@@ -58,7 +60,7 @@ async def cb_category_programs(callback: CallbackQuery, session: AsyncSession):
     programs, total_count = await get_programs_by_category(session, cat_id, limit=per_page, offset=offset)
 
     if total_count == 0:
-        await callback.answer("Ushbu bo'limda hozircha dasturlar yo'q.", show_alert=True)
+        await callback.message.answer("Ushbu bo'limda hozircha dasturlar yo'q.")
         return
 
     paginator = Paginator(total_items=total_count, page=page, per_page=per_page)
@@ -69,17 +71,17 @@ async def cb_category_programs(callback: CallbackQuery, session: AsyncSession):
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data.startswith("page_cat_"))
 async def cb_category_pagination(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     parts = callback.data.split("_")
     cat_id = int(parts[2])
     page = int(parts[3])
 
     category = await get_category_by_id(session, cat_id)
     if not category:
-        await callback.answer("Kategoriya topilmadi!", show_alert=True)
+        await callback.message.answer("Kategoriya topilmadi!")
         return
 
     per_page = 5
@@ -94,23 +96,37 @@ async def cb_category_pagination(callback: CallbackQuery, session: AsyncSession)
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data.startswith("view_prog_"))
 async def cb_view_program(callback: CallbackQuery, session: AsyncSession, bot: Bot):
+    # Darhol javob beramiz, shunda tugma aylanib qotib qolmaydi!
+    await callback.answer()
+
     prog_id = int(callback.data.split("_")[2])
     prog = await get_program_by_id(session, prog_id)
     if not prog:
-        await callback.answer("Dastur topilmadi yoki o'chirilgan!", show_alert=True)
+        await callback.message.answer("Dastur topilmadi yoki o'chirilgan!")
         return
 
     user = await get_user_by_telegram_id(session, callback.from_user.id)
     user_db_id = user.id if user else 0
 
-    await increment_views(session, prog.id)
+    # Ko'rishlar sonini fonda oshiramiz
+    asyncio.create_task(increment_views(session, prog.id))
+
     is_fav = await is_favorite(session, user_db_id, prog.id) if user_db_id else False
     avg_rating, count = await get_program_rating_stats(session, prog.id)
-    bot_info = await bot.get_me()
+
+    # Bot username ni keshdan olamiz
+    from app.utils.cache import cache
+    bot_username = cache.get_bot_username()
+    if not bot_username:
+        try:
+            bot_info = await bot.get_me()
+            bot_username = bot_info.username
+            cache.set_bot_username(bot_username)
+        except Exception:
+            bot_username = "dasturlar_bot"
 
     caption = (
         f"🏷 <b>{escape_text(prog.title)}</b>\n\n"
@@ -128,9 +144,10 @@ async def cb_view_program(callback: CallbackQuery, session: AsyncSession, bot: B
         program_id=prog.id,
         file_size_formatted=format_size(prog.file_size),
         is_fav=is_fav,
-        bot_username=bot_info.username,
+        bot_username=bot_username,
         prog_code=prog.code,
-        back_target=f"cat_{prog.category_id}_1"
+        back_target=f"cat_{prog.category_id}_1",
+        download_url=prog.download_url
     )
 
     # Agar rasm bo'lsa yangi xabar qilib rasm bilan yuboramiz
@@ -150,8 +167,6 @@ async def cb_view_program(callback: CallbackQuery, session: AsyncSession, bot: B
             await callback.message.edit_text(caption, reply_markup=keyboard, parse_mode="HTML")
         except Exception:
             await callback.message.answer(caption, reply_markup=keyboard, parse_mode="HTML")
-
-    await callback.answer()
 
 @router.message(F.text == "🔥 TOP Dasturlar")
 async def msg_top_programs(message: Message, session: AsyncSession):

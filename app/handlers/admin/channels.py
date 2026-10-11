@@ -17,8 +17,8 @@ class AddChannelState(StatesGroup):
 
 @router.callback_query(F.data == "admin_channels")
 async def cb_admin_channels(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     if callback.from_user.id not in settings.admin_ids:
-        await callback.answer("Ruxsat berilmagan!", show_alert=True)
         return
 
     channels = await get_active_channels(session)
@@ -29,25 +29,25 @@ async def cb_admin_channels(callback: CallbackQuery, session: AsyncSession):
     )
 
     keyboard = [
-        [InlineKeyboardButton(text="➕ Yangi kanal qo'shish", callback_data="add_new_channel", style="success")]
+        [InlineKeyboardButton(text="➕ Yangi kanal qo'shish", callback_data="add_new_channel")]
     ]
 
     for ch in channels:
         keyboard.append([
             InlineKeyboardButton(text=f"📢 {ch.channel_title}", url=ch.channel_url),
-            InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"delchan_{ch.channel_id}", style="danger")
+            InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"delchan_{ch.channel_id}")
         ])
 
-    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu", style="danger")])
+    keyboard.append([InlineKeyboardButton(text="🔙 Admin Menyusi", callback_data="admin_menu")])
 
     try:
         await callback.message.edit_text(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard), parse_mode="HTML")
-    await callback.answer()
 
 @router.callback_query(F.data == "add_new_channel")
 async def cb_add_channel_prompt(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.set_state(AddChannelState.waiting_channel_id)
     text = (
         "➕ <b>1-qadam: Kanal ID raqamini kiriting:</b>\n\n"
@@ -55,13 +55,12 @@ async def cb_add_channel_prompt(callback: CallbackQuery, state: FSMContext):
         "<i>(Kanal ID sini @userinfobot yoki boshqa info botlar orqali olishingiz mumkin):</i>"
     )
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_channels", style="danger")]]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Bekor qilish", callback_data="admin_channels")]]
     )
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-    await callback.answer()
 
 @router.message(AddChannelState.waiting_channel_id, F.text)
 async def process_channel_id(message: Message, state: FSMContext):

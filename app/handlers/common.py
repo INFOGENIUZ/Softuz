@@ -43,7 +43,15 @@ async def cmd_start(message: Message, command: CommandObject, session: AsyncSess
             await increment_views(session, prog.id)
             is_fav = await is_favorite(session, user.id, prog.id)
             avg_rating, count = await get_program_rating_stats(session, prog.id)
-            bot_info = await bot.get_me()
+            from app.utils.cache import cache
+            bot_username = cache.get_bot_username()
+            if not bot_username:
+                try:
+                    bot_info = await bot.get_me()
+                    bot_username = bot_info.username
+                    cache.set_bot_username(bot_username)
+                except Exception:
+                    bot_username = "dasturlar_bot"
 
             caption = (
                 f"🏷 <b>{escape_text(prog.title)}</b>\n\n"
@@ -61,9 +69,10 @@ async def cmd_start(message: Message, command: CommandObject, session: AsyncSess
                 program_id=prog.id,
                 file_size_formatted=format_size(prog.file_size),
                 is_fav=is_fav,
-                bot_username=bot_info.username,
+                bot_username=bot_username,
                 prog_code=prog.code,
-                back_target="open_categories"
+                back_target="open_categories",
+                download_url=prog.download_url
             )
 
             if prog.image_file_id:
@@ -161,6 +170,7 @@ async def msg_help(message: Message):
 
 @router.callback_query(F.data == "back_to_main")
 async def cb_back_to_main(callback: CallbackQuery):
+    await callback.answer()
     is_admin = callback.from_user.id in settings.admin_ids
     try:
         await callback.message.delete()
@@ -171,7 +181,6 @@ async def cb_back_to_main(callback: CallbackQuery):
         reply_markup=get_main_reply_keyboard(is_admin=is_admin),
         parse_mode="HTML"
     )
-    await callback.answer()
 
 @router.callback_query(F.data == "noop")
 async def cb_noop(callback: CallbackQuery):
